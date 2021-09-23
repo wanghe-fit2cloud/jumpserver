@@ -98,20 +98,24 @@ class AuthBook(BaseUser, AbsConnectivity):
         self.__class__.objects.bulk_update(matched, ['password', 'private_key', 'public_key'])
 
     def remove_asset_admin_user_if_need(self):
-        if not self.asset or not self.asset.admin_user or not self.asset.admin_user.is_admin_user:
+        if not self.asset or not self.asset.admin_user:
             return
-        logger.debug('Remove asset admin user: {} {}'.format(self.asset, self.asset.admin_user))
+        if not self.systemuser or not self.systemuser.is_admin_user:
+            return
+        if self.systemuser != self.asset.admin_user:
+            return
         self.asset.admin_user = None
         self.asset.save()
+        logger.debug('Remove asset admin user: {} {}'.format(self.asset, self.asset.admin_user))
 
     def update_asset_admin_user_if_need(self):
         if not self.systemuser or not self.systemuser.is_admin_user:
             return
         if not self.asset or self.asset.admin_user == self.systemuser:
             return
-        logger.debug('Update asset admin user: {} {}'.format(self.asset, self.systemuser))
         self.asset.admin_user = self.systemuser
         self.asset.save()
+        logger.debug('Update asset admin user: {} {}'.format(self.asset, self.systemuser))
 
     def __str__(self):
         return self.smart_name
